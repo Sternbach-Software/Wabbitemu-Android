@@ -18,11 +18,11 @@
     <PreferenceCategory
         android:key="skinSettings"
         android:title="@string/skinSettings" >
-        <net.margaritov.preference.colorpicker.ColorPickerPreference
+        <!--<net.margaritov.preference.colorpicker.ColorPickerPreference
             android:defaultValue="0xff000000"
             android:key="faceplateColor"
             android:summary="@string/faceplateColorSummary"
-            android:title="@string/faceplateColor" />
+            android:title="@string/faceplateColor" />-->
 
         <CheckBoxPreference
             android:defaultValue="true"

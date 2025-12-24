@@ -30,13 +30,11 @@ public class CalculatorManager {
     private static final long MIN_TSTATE_KEY = 600;
     private static final long MIN_TSTATE_ON_KEY = 25000;
 
-    private static final long MAX_TSTATE_KEY = MIN_TSTATE_KEY * 1000000;
-    private static final long MAX_TSTATE_ON_KEY = MAX_TSTATE_KEY * 1000000;
-
     private final SkinBitmapLoader mSkinLoader = SkinBitmapLoader.getInstance();
     private final AtomicBoolean mHasLoadedRom = new AtomicBoolean();
     private final CalcThread mCalcThread = new CalcThread();
     private final long[][] mKeyTimePressed = new long[8][8];
+    private final boolean[][] mIsKeyPressPending = new boolean[8][8];
     private final ScheduledExecutorService mRepressExecutor = new ScheduledThreadPoolExecutor(1);
 
 
@@ -91,17 +89,23 @@ public class CalculatorManager {
     }
 
     public void pressKey(final int group, final int bit) {
+        synchronized (mKeyTimePressed) {
+            mIsKeyPressPending[group][bit] = true;
+        }
         mCalcThread.queueRunnable(new Runnable() {
             @Override
             public void run() {
                 CalcInterface.PressKey(group, bit);
-                mKeyTimePressed[group][bit] = CalcInterface.Tstates();
+                synchronized (mKeyTimePressed) {
+                    mKeyTimePressed[group][bit] = CalcInterface.Tstates();
+                    mIsKeyPressPending[group][bit] = false;
+                }
             }
         });
     }
 
     public void releaseKey(final int group, final int bit) {
-        if (hasCalcProcessedKey(group, bit)) {
+        if (shouldDelayRelease(group, bit)) {
             final TimerTask task = new TimerTask() {
                 @Override
                 public void run() {
@@ -120,14 +124,21 @@ public class CalculatorManager {
     }
 
 
-    private boolean hasCalcProcessedKey(final int group, final int bit) {
-        final long tstates = CalcInterface.Tstates();
-        final long timePressed = mKeyTimePressed[group][bit];
-        if (group == CalcInterface.ON_KEY_GROUP && bit == CalcInterface.ON_KEY_BIT) {
-            return ((timePressed + MIN_TSTATE_ON_KEY) <= tstates) && ((timePressed + MAX_TSTATE_ON_KEY) <= tstates);
-        } else {
-            return ((timePressed + MIN_TSTATE_KEY) <= tstates)
-                    && ((timePressed + MAX_TSTATE_KEY) <= tstates);
+    private boolean shouldDelayRelease(final int group, final int bit) {
+        synchronized (mKeyTimePressed) {
+            if (mIsKeyPressPending[group][bit]) {
+                return true;
+            }
+
+            final long tstates = CalcInterface.Tstates();
+            final long timePressed = mKeyTimePressed[group][bit];
+            final long elapsed = tstates - timePressed;
+
+            if (group == CalcInterface.ON_KEY_GROUP && bit == CalcInterface.ON_KEY_BIT) {
+                return elapsed < MIN_TSTATE_ON_KEY;
+            } else {
+                return elapsed < MIN_TSTATE_KEY;
+            }
         }
     }
 
