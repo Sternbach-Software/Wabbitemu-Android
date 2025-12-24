@@ -26,14 +26,11 @@ import io.github.angelsl.wabbitemu.utils.IntentConstants;
 import io.github.angelsl.wabbitemu.utils.OnBrowseItemSelected;
 import io.github.angelsl.wabbitemu.utils.ViewUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class BrowseFragment extends Fragment {
 
     public static final int REQUEST_CODE = 20;
-    private final FileUtils mFileUtils = FileUtils.getInstance();
     private OnBrowseItemSelected mBrowseCallback;
 
     private AsyncTask<Void, Void, ArrayAdapter<String>> mSearchTask;
@@ -89,7 +86,7 @@ public class BrowseFragment extends Fragment {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CODE) {
-            mFileUtils.invalidateFiles();
+            FileUtils.INSTANCE.invalidateFiles();
             if (getView() != null) {
                 startSearch(getView(), mExtensionsRegex);
             }
@@ -110,7 +107,7 @@ public class BrowseFragment extends Fragment {
 
             @Override
             protected ArrayAdapter<String> doInBackground(final Void... params) {
-                final List<String> files = mFileUtils.getValidFiles(extensionsRegex);
+                final List<String> files = FileUtils.INSTANCE.getValidFiles(extensionsRegex);
                 Log.d("BrowseFragment", "doInBackground: " + extensionsRegex + " " + files.size());
                 return new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, files);
             }
