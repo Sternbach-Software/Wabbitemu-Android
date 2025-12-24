@@ -45,5 +45,6 @@ set(WABBITEMU_SRC
     wabbitemujni.c)
 
 add_library(Wabbitemu SHARED ${WABBITEMU_SRC})
+target_link_options(Wabbitemu PRIVATE "-Wl,-z,max-page-size=16384")
 target_link_libraries(Wabbitemu ${LIBLOG} ${LIBZ})
 target_include_directories(Wabbitemu PRIVATE . core utilities interface hardware)
