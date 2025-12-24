@@ -154,7 +154,7 @@ class WabbitemuActivity : AppCompatActivity() {
 
     public override fun onResume() {
         super.onResume()
-        if (mSharedPrefs.getBoolean(PreferenceConstants.IMMERSIVE_MODE.toString(), false)) {
+        if (mSharedPrefs.getBoolean(PreferenceConstants.IMMERSIVE_MODE.toString(), true)) {
             window.decorView.setOnSystemUiVisibilityChangeListener(mVisibilityListener)
             setImmersiveMode(true)
         }
@@ -162,7 +162,7 @@ class WabbitemuActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        if (mSharedPrefs.getBoolean(PreferenceConstants.IMMERSIVE_MODE.toString(), false)) {
+        if (mSharedPrefs.getBoolean(PreferenceConstants.IMMERSIVE_MODE.toString(), true)) {
             setImmersiveMode(false)
             window.decorView.setOnSystemUiVisibilityChangeListener(null)
         }

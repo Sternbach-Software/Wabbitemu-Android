@@ -184,7 +184,7 @@ public class WabbitemuActivityJava extends AppCompatActivity {
 	public void onResume() {
 		super.onResume();
 
-		if (mSharedPrefs.getBoolean(PreferenceConstants.IMMERSIVE_MODE.toString(), false)) {
+		if (mSharedPrefs.getBoolean(PreferenceConstants.IMMERSIVE_MODE.toString(), true)) {
 			getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(mVisibilityListener);
 			setImmersiveMode(true);
 		}
@@ -194,7 +194,7 @@ public class WabbitemuActivityJava extends AppCompatActivity {
 	protected void onPause() {
 		super.onPause();
 
-		if (mSharedPrefs.getBoolean(PreferenceConstants.IMMERSIVE_MODE.toString(), false)) {
+		if (mSharedPrefs.getBoolean(PreferenceConstants.IMMERSIVE_MODE.toString(), true)) {
 			setImmersiveMode(false);
 			getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(null);
 		}
