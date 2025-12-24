@@ -107,7 +107,8 @@ public class CalcSkin extends View {
 		}
 
 		final int actionMasked = event.getActionMasked();
-		if (actionMasked == MotionEvent.ACTION_UP || actionMasked == MotionEvent.ACTION_POINTER_UP
+		if (actionMasked == MotionEvent.ACTION_UP
+				|| actionMasked == MotionEvent.ACTION_POINTER_UP
 				|| actionMasked == MotionEvent.ACTION_CANCEL)
 		{
 			for (int i = 0; i < mKeymapDrawRect.size(); i++) {
