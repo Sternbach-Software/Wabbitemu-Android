@@ -49,7 +49,7 @@
             android:summary="@string/largeScreenSummary"
             android:title="@string/largeScreen" />
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="useImmersiveMode"
             android:summary="@string/useImmersiveModeSummary"
             android:title="@string/useImmersiveMode" />
