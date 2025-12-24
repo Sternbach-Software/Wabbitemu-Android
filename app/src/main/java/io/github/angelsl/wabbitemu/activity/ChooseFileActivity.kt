@@ -34,6 +34,7 @@ import io.github.angelsl.wabbitemu.BuildConfig
 import io.github.angelsl.wabbitemu.R
 import io.github.angelsl.wabbitemu.calc.CalcModel
 import io.github.angelsl.wabbitemu.components.SimpleRadioGroup
+import io.github.angelsl.wabbitemu.ui.AppTheme
 import io.github.angelsl.wabbitemu.utils.PreferenceConstants
 import kotlinx.coroutines.launch
 import java.io.File
@@ -115,28 +116,30 @@ class ChooseFileActivity : ComponentActivity() {
             )
 
 
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(text = "A ROM file is needed to make this app work. Previous versions included a wizard/scraper bot for downloading a ROM, but Texas Instruments updated their website, and the scraper bot stopped working. The project is open-source, please feel free to contribute.")
-                SimpleRadioGroup(
-                    CalcModel.entries.minus(CalcModel.NO_CALC),
-                    selectedModel,
-                    { strings[it.name.replace("_", "").lowercase()] ?: "" }) {
-                    selectedModel = it
-                }
-                Button(
-                    onClick = {
-                        filePickerLauncher.launch(arrayOf("*/*"))
-                    },
-                    enabled = selectedModel != CalcModel.NO_CALC
+            AppTheme {
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Text("Choose ROM file")
+                    Text(text = "A ROM file is needed to make this app work. Previous versions included a wizard/scraper bot for downloading a ROM, but Texas Instruments updated their website, and the scraper bot stopped working. The project is open-source, please feel free to contribute.")
+                    SimpleRadioGroup(
+                        CalcModel.entries.minus(CalcModel.NO_CALC),
+                        selectedModel,
+                        { strings[it.name.replace("_", "").lowercase()] ?: "" }) {
+                        selectedModel = it
+                    }
+                    Button(
+                        onClick = {
+                            filePickerLauncher.launch(arrayOf("*/*"))
+                        },
+                        enabled = selectedModel != CalcModel.NO_CALC
+                    ) {
+                        Text("Choose ROM file")
+                    }
                 }
             }
         }
