@@ -10,8 +10,8 @@ android {
         applicationId "org.sternbach.software.wabbitemu"
         minSdkVersion 21
         targetSdkVersion 36
-        versionCode 39
-        versionName "1.06.0"
+        versionCode 1
+        versionName "1.0.0"
     }
     buildTypes {
         debug {
