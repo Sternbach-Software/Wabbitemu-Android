@@ -7,7 +7,7 @@ plugins {
 android {
     compileSdkVersion 36
     defaultConfig {
-        applicationId "io.github.angelsl.wabbitemu"
+        applicationId "org.sternbach.software.wabbitemu"
         minSdkVersion 21
         targetSdkVersion 36
         versionCode 39
