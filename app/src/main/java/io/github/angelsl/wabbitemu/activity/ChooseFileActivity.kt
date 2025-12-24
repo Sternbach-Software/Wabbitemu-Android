@@ -95,6 +95,11 @@ class ChooseFileActivity : ComponentActivity() {
 //                            assert(destinationFile.length() == uri.toFile().length())
                             // Handle the file as needed
                             handleFile(destinationFile.absolutePath, selectedModel)
+                            Toast.makeText(
+                                this@ChooseFileActivity,
+                                "If button hitbox is misaligned, disable Immersive Mode in settings",
+                                Toast.LENGTH_SHORT
+                            ).show()
                             /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                                 Log.d("Wabbitemu", "onCreate: Requesting all files permission")
                                 startActivity(
