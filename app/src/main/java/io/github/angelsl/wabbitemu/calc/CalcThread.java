@@ -36,10 +36,12 @@ public class CalcThread extends Thread {
                 break;
             }
 
-            for (Runnable runnable : mRunnables) {
-                runnable.run();
+            synchronized (mRunnables) {
+                for (Runnable runnable : mRunnables) {
+                    runnable.run();
+                }
+                mRunnables.clear();
             }
-            mRunnables.clear();
 
             if (mIsPaused.get()) {
                 try {
