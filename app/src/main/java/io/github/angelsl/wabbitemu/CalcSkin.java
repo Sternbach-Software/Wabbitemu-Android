@@ -98,8 +98,16 @@ public class CalcSkin extends View {
 	}
 
 	private boolean handleTouchEvent(final MotionEvent event, final int index) {
-		final int x = (int) (event.getX(index) - mSkinLoader.getSkinX());
-		final int y = (int) (event.getY(index) - mSkinLoader.getSkinY());
+		final Bitmap renderedSkin = mSkinLoader.getRenderedSkin();
+		if (renderedSkin == null) {
+			return false;
+		}
+
+		final float scaleX = (float) renderedSkin.getWidth() / getWidth();
+		final float scaleY = (float) renderedSkin.getHeight() / getHeight();
+
+		final int x = (int) (event.getX(index) * scaleX - mSkinLoader.getSkinX());
+		final int y = (int) (event.getY(index) * scaleY - mSkinLoader.getSkinY());
 		final int id = event.getPointerId(index);
 
 		if (mSkinLoader.isOutsideKeymap(x, y)) {
