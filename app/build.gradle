@@ -10,7 +10,7 @@ android {
         applicationId "org.sternbach.software.wabbitemu"
         minSdkVersion 21
         targetSdkVersion 36
-        versionCode 2
+        versionCode 6
         versionName "1.0.0"
     }
     buildTypes {
@@ -27,12 +27,18 @@ android {
             path "src/main/jni/CMakeLists.txt"
         }
     }
-    packagingOptions {
-        pickFirst 'LICENSE.Apachev2'
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+        resources {
+            pickFirsts += ['LICENSE.Apachev2']
+        }
     }
 
     buildFeatures {
         compose true
+        buildConfig true
     }
 
     composeOptions {
@@ -72,4 +78,3 @@ dependencies {
     // Optional - Integration with ViewModels
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1'
 }
-
