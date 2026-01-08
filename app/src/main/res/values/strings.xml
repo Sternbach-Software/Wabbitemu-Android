@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <resources>
     <string name="app_name">Wabbitemu</string>
-    <string name="website">http://wabbit.codeplex.com</string>
+    <string name="website">https://github.com/Sternbach-Software/Wabbitemu-Android</string>
     <string name="openSourceSoftware">Notices for Open Source Software Used:</string>
     <string name="colorPickerLink"><b><a href="https://github.com/attenzione/android-ColorPickerPreference">ColorPickerPreference</a></b>\n/*\n
  * Copyright © 2011 Sergey Margaritov &amp; Daniel Nilsson\n
