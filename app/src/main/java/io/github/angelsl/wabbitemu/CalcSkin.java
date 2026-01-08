@@ -43,7 +43,8 @@ public class CalcSkin extends View {
 
 		mPaint = new Paint();
 		mPaint.setAntiAlias(false);
-		mPaint.setARGB(0xFF, 0xFF, 0xFF, 0xFF);
+        mPaint.setFilterBitmap(false);
+        mPaint.setARGB(0xFF, 0xFF, 0xFF, 0xFF);
 
 		mKeymapPaint.setAntiAlias(false);
 		mKeymapPaint.setARGB(0x80, 0x00, 0x00, 0x00);
