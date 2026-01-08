@@ -30,7 +30,7 @@ object FileUtils {
             override fun doInBackground(vararg params: Void?): Void? {
                 val path: String
                 if (StorageUtils.hasExternalStorage()) {
-                    path = StorageUtils.getPrimaryStoragePath()
+                    path = StorageUtils.primaryStoragePath
                     println("Primary storage path: $path")
                     mFiles = findValidFiles(path)
                     val extraStorage = System.getenv("SECONDARY_STORAGE")

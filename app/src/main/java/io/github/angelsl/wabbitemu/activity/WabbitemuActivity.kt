@@ -1,24 +1,29 @@
 package io.github.angelsl.wabbitemu.activity
 
 import android.annotation.TargetApi
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.SharedPreferences
+import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.OpenableColumns
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.View.OnSystemUiVisibilityChangeListener
+import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import androidx.preference.PreferenceManager
@@ -26,29 +31,27 @@ import io.github.angelsl.wabbitemu.R
 import io.github.angelsl.wabbitemu.SkinBitmapLoader
 import io.github.angelsl.wabbitemu.calc.CalcModel
 import io.github.angelsl.wabbitemu.calc.CalculatorManager
-import io.github.angelsl.wabbitemu.fragment.EmulatorButtonsFragment
 import io.github.angelsl.wabbitemu.fragment.EmulatorFragment
 import io.github.angelsl.wabbitemu.utils.*
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.net.HttpURLConnection
 import java.text.SimpleDateFormat
 import java.util.*
 
 class WabbitemuActivity : AppCompatActivity() {
-    private enum class MainMenuItem(private val mPosition: Int) {
+    private enum class MainMenuItem(val position: Int) {
         LOAD_FILE_MENU_ITEM(0),
         WIZARD_MENU_ITEM(1),
         RESET_MENU_ITEM(2),
         SCREENSHOT_MENU_ITEM(3),
-        SETTINGS_MENU_ITEM(
-            4
-        ),
+        SETTINGS_MENU_ITEM(4),
         ABOUT_MENU_ITEM(5);
 
         companion object {
             fun fromPosition(position: Int): MainMenuItem? {
-                return values().find { it.mPosition == position } //TODO just use index?
+                return values().find { it.position == position }
             }
         }
     }
@@ -61,8 +64,9 @@ class WabbitemuActivity : AppCompatActivity() {
     private lateinit var mDrawerLayout: DrawerLayout
     private lateinit var mDrawerList: ListView
     private var mWasUserLaunched = false
-    private fun handleFile(f: File, runnable: Runnable) {
-//        mEmulatorFragment!!.handleFile(f, runnable)
+
+    private fun handleFile(f: File, runnable: Runnable?) {
+        mEmulatorFragment?.handleFile(f, runnable)
     }
 
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,13 +81,14 @@ class WabbitemuActivity : AppCompatActivity() {
             )
             return
         }
+
         sBestCacheDir = findBestCacheDir()
         mCalcManager.initialize(this, sBestCacheDir)
         mSkinLoader.initialize(this)
         val fileName = lastRomSetting
+        val currentLaunchRunnable = launchRunnable
         if (fileName != null) {
             val file = File(fileName)
-            Log.d("Wabbitemu", "onCreate: Loading rom file.")
             mCalcManager.loadRomFile(file) { errorCode ->
                 if (errorCode != 0) {
                     Log.e(
@@ -94,17 +99,14 @@ class WabbitemuActivity : AppCompatActivity() {
                             errorCode
                         )
                     )
-//                    launchRunnable.run()
-//                    Toast.makeText(this, "Unable to load ROM; error code $errorCode", Toast.LENGTH_LONG).show()
+                    currentLaunchRunnable.run()
                 }
             }
         }
-        setTheme(R.style.Wabbitemu)
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         setContentView(R.layout.main)
         mEmulatorFragment = supportFragmentManager.findFragmentById(R.id.content_frame) as EmulatorFragment
         attachMenu()
-        Log.d("Wabbitemu", "onCreate: isFirstRun: $isFirstRun, lastRomModel=$lastRomModel")
+
         if (isFirstRun) {
             mWasUserLaunched = false
             val wizardIntent = Intent(this, WizardActivity::class.java)
@@ -112,12 +114,11 @@ class WabbitemuActivity : AppCompatActivity() {
             return
         }
 
-        // we expect an absolute filename
         val lastRomModel = CalcModel.fromModel(lastRomModel)
         if (lastRomModel != CalcModel.NO_CALC) {
             mSkinLoader.loadSkinAndKeymap(lastRomModel)
-        } else if (fileName == null || fileName == "") {
-//            runnable.run()
+        } else if (fileName.isNullOrEmpty()) {
+            currentLaunchRunnable.run()
         }
     }
 
@@ -169,12 +170,12 @@ class WabbitemuActivity : AppCompatActivity() {
     }
 
     private fun attachMenu() {
-        mDrawerLayout = findViewById(R.id.drawer_layout)
-        mDrawerList = findViewById(R.id.left_drawer)
+        mDrawerLayout = ViewUtils.findViewById(this, R.id.drawer_layout, DrawerLayout::class.java)
+        mDrawerList = ViewUtils.findViewById(this, R.id.left_drawer, ListView::class.java)
         val menuItems = resources.getStringArray(R.array.menu_array)
         mDrawerList.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, menuItems)
         mDrawerLayout.setScrimColor(Color.parseColor("#DD000000"))
-        mDrawerList.setOnItemClickListener { parent, view, position, id ->
+        mDrawerList.setOnItemClickListener { _, _, position, _ ->
             handleMenuItem(
                 MainMenuItem.fromPosition(position)
             )
@@ -212,21 +213,34 @@ class WabbitemuActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
-            LOAD_FILE_CODE -> if (resultCode == RESULT_OK) {
-                val fileName = data?.getStringExtra(IntentConstants.FILENAME_EXTRA_STRING)
-                handleFile(File(fileName)) {
-                    ErrorUtils.showErrorDialog(
-                        this@WabbitemuActivity,
-                        R.string.errorLink
-                    )
+            LOAD_FILE_CODE -> if (resultCode == RESULT_OK && data != null) {
+                val uri = data.data
+                if (uri != null) {
+                    Thread {
+                        val file = copyFileFromUri(uri)
+                        runOnUiThread {
+                            if (file != null) {
+                                handleFile(file) {
+                                    ErrorUtils.showErrorDialog(
+                                        this@WabbitemuActivity,
+                                        R.string.errorLink
+                                    )
+                                }
+                            } else {
+                                ErrorUtils.showErrorDialog(
+                                    this@WabbitemuActivity,
+                                    R.string.errorLink
+                                )
+                            }
+                        }
+                    }.start()
                 }
             }
             SETUP_WIZARD -> if (resultCode == RESULT_OK) {
                 val fileName = data?.getStringExtra(IntentConstants.FILENAME_EXTRA_STRING)
                 handleFile(File(fileName), launchRunnable)
                 if (isFirstRun) {
-                    val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
-                    val editor = sharedPrefs.edit()
+                    val editor = mSharedPrefs.edit()
                     editor.putBoolean(PreferenceConstants.FIRST_RUN.toString(), false)
                     editor.apply()
                     mDrawerLayout.openDrawer(mDrawerList)
@@ -290,7 +304,7 @@ class WabbitemuActivity : AppCompatActivity() {
     }
 
     private fun screenshotCalc() {
-        val screenshot: Bitmap? = null//mEmulatorFragment!!.screenshot
+        val screenshot: Bitmap? = mEmulatorFragment?.screenshot
         if (screenshot == null) {
             ErrorUtils.showErrorDialog(this, R.string.errorScreenshot)
             return
@@ -302,7 +316,7 @@ class WabbitemuActivity : AppCompatActivity() {
         val outputDir: File
         val outputFile: File
         if (StorageUtils.hasExternalStorage()) {
-            outputDir = File(File(StorageUtils.getPrimaryStoragePath(), "Wabbitemu"), "Screenshots")
+            outputDir = File(File(StorageUtils.primaryStoragePath, "Wabbitemu"), "Screenshots")
             if (!outputDir.exists()) {
                 outputDir.mkdirs()
             }
@@ -334,27 +348,17 @@ class WabbitemuActivity : AppCompatActivity() {
     }
 
     private fun launchBrowse() {
-        startActivity(Intent(this, ChooseFileActivity::class.java))
-        /*
-        val setupIntent = Intent(this, BrowseActivity::class.java)
-        // not perfect but it will work well enough
-        val extensions = when (mCalcManager.model) {
-            CalcModel.TI_73 -> "\\.(rom|sav|73[b|c|d|g|i|k|l|m|n|p|q|s|t|u|v|w|y|z])$"
-            CalcModel.TI_82 -> "\\.(rom|sav|82[b|c|d|g|i|l|m|n|p|q|s|t|u|v|w|y|z])$"
-            CalcModel.TI_83 -> "\\.(rom|sav|83[b|c|d|g|i|l|m|n|p|q|s|t|u|v|w|y|z])$"
-            CalcModel.TI_83P,
-            CalcModel.TI_83PSE,
-            CalcModel.TI_84P,
-            CalcModel.TI_84PSE -> "\\.(rom|sav|8x[b|c|d|g|i|k|l|m|n|p|q|s|t|u|v|w|y|z])$"
-            CalcModel.TI_84PCSE -> "\\.(rom|sav|8[x|c][b|c|d|g|i|k|l|m|n|p|q|s|t|u|v|w|y|z])$"
-            CalcModel.TI_85 -> "\\.(rom|sav|85[b|c|d|g|i|l|m|n|p|q|s|t|u|v|w|y|z])$"
-            CalcModel.TI_86 -> "\\.(rom|sav|86[b|c|d|g|i|l|m|n|p|q|s|t|u|v|w|y|z])$"
-            else -> DEFAULT_FILE_REGEX
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.setType("*/*")
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        try {
+            startActivityForResult(
+                Intent.createChooser(intent, resources.getString(R.string.browseFileDescription)),
+                LOAD_FILE_CODE
+            )
+        } catch (ex: android.content.ActivityNotFoundException) {
+            Toast.makeText(this, "Please install a file manager.", Toast.LENGTH_SHORT).show()
         }
-        val description = resources.getString(R.string.browseFileDescription)
-        setupIntent.putExtra(IntentConstants.EXTENSION_EXTRA_REGEX, extensions)
-        setupIntent.putExtra(IntentConstants.BROWSE_DESCRIPTION_EXTRA_STRING, description)
-        startActivityForResult(setupIntent, LOAD_FILE_CODE)*/
     }
 
     private fun launchWizard() {
@@ -364,7 +368,7 @@ class WabbitemuActivity : AppCompatActivity() {
     }
 
     private fun resetCalc() {
-//        mEmulatorFragment!!.resetCalc()
+        mEmulatorFragment?.resetCalc()
     }
 
     private fun launchSettings() {
@@ -378,20 +382,9 @@ class WabbitemuActivity : AppCompatActivity() {
             return
         }
 
-        // The UI options currently enabled are represented by a bitfield.
-        // getSystemUiVisibility() gives us that bitfield.
         val decorView = window.decorView
         val uiOptions = decorView.systemUiVisibility
 
-        // Immersive mode: Backward compatible to KitKat.
-        // Note that this flag doesn't do anything by itself, it only augments
-        // the behavior of HIDE_NAVIGATION and FLAG_FULLSCREEN. For the purposes
-        // of this sample all three flags are being toggled together.
-        // Note that there are two immersive mode UI flags, one of which is
-        // referred to as "sticky".
-        // Sticky immersive mode differs in that it makes the navigation and
-        // status bars semi-transparent, and the UI flag does not get cleared
-        // when the user interacts with the screen.
         decorView.systemUiVisibility = if (isImmersive) {
             uiOptions or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         } else {
@@ -400,11 +393,7 @@ class WabbitemuActivity : AppCompatActivity() {
     }
 
     private inner class VisibilityChangeListener : OnSystemUiVisibilityChangeListener {
-        @Deprecated("Deprecated in Java", ReplaceWith("setImmersiveMode(true)"))
         override fun onSystemUiVisibilityChange(visibility: Int) {
-            // If someone tries to to change the visibility after have set it,
-            // we basically want to ignore it. Usually this is caused by
-            // something like the loading dialog.
             setImmersiveMode(true)
         }
     }
@@ -416,12 +405,63 @@ class WabbitemuActivity : AppCompatActivity() {
         }
     }
 
+    private fun copyFileFromUri(uri: Uri): File? {
+        var fileName = getFileName(uri)
+        if (fileName == null) {
+            fileName = "temp_file.8xp"
+        }
+        val cacheDir = cacheDir
+        val file = File(cacheDir, fileName)
+        try {
+            contentResolver.openInputStream(uri).use { inputStream ->
+                FileOutputStream(file).use { outputStream ->
+                    val buffer = ByteArray(4 * 1024)
+                    var read: Int
+                    while (inputStream!!.read(buffer).also { read = it } != -1) {
+                        outputStream.write(buffer, 0, read)
+                    }
+                    outputStream.flush()
+                    return file
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
+    private fun getFileName(uri: Uri): String? {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            try {
+                contentResolver.query(uri, null, null, null, null).use { cursor ->
+                    if (cursor != null && cursor.moveToFirst()) {
+                        val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (index >= 0) {
+                            result = cursor.getString(index)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore
+            }
+        }
+        if (result == null) {
+            result = uri.path
+            val cut = result!!.lastIndexOf('/')
+            if (cut != -1) {
+                result = result!!.substring(cut + 1)
+            }
+        }
+        return result
+    }
+
     companion object {
         private const val LOAD_FILE_CODE = 1
         private const val SETUP_WIZARD = 2
         private const val DEFAULT_FILE_REGEX =
             "\\.(rom|sav|[7|8][2|3|x|c|5|6][b|c|d|g|i|k|l|m|n|p|q|s|t|u|v|w|y|z])$"
         @JvmField
-		var sBestCacheDir: String? = null
+        var sBestCacheDir: String? = null
     }
 }
