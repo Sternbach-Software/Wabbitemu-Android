@@ -42,10 +42,16 @@ import io.github.angelsl.wabbitemu.utils.ViewUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import android.net.Uri;
+import android.database.Cursor;
+import android.provider.OpenableColumns;
 
 public class WabbitemuActivityJava extends AppCompatActivity {
 	private static final int LOAD_FILE_CODE = 1;
@@ -270,15 +276,31 @@ public class WabbitemuActivityJava extends AppCompatActivity {
 		super.onActivityResult(requestCode, resultCode, data);
 		switch (requestCode) {
 			case LOAD_FILE_CODE:
-				if (resultCode == RESULT_OK) {
-					final String fileName = data.getStringExtra(IntentConstants.FILENAME_EXTRA_STRING);
-					handleFile(new File(fileName), new Runnable() {
-
-						@Override
-						public void run() {
-							ErrorUtils.showErrorDialog(WabbitemuActivityJava.this, R.string.errorLink);
-						}
-					});
+				if (resultCode == RESULT_OK && data != null) {
+					final Uri uri = data.getData();
+					if (uri != null) {
+						new Thread(new Runnable() {
+							@Override
+							public void run() {
+								final File file = copyFileFromUri(uri);
+								runOnUiThread(new Runnable() {
+									@Override
+									public void run() {
+										if (file != null) {
+											handleFile(file, new Runnable() {
+												@Override
+												public void run() {
+													ErrorUtils.showErrorDialog(WabbitemuActivityJava.this, R.string.errorLink);
+												}
+											});
+										} else {
+											ErrorUtils.showErrorDialog(WabbitemuActivityJava.this, R.string.errorLink);
+										}
+									}
+								});
+							}
+						}).start();
+					}
 				}
 				break;
 			case SETUP_WIZARD:
@@ -413,42 +435,14 @@ public class WabbitemuActivityJava extends AppCompatActivity {
 	}
 
 	private void launchBrowse() {
-		final Intent setupIntent = new Intent(this, BrowseActivity.class);
-		// not perfect but it will work well enough
-		final String extensions;
-		switch (mCalcManager.getModel()) {
-		case TI_73:
-			extensions = "\\.(rom|sav|73[b|c|d|g|i|k|l|m|n|p|q|s|t|u|v|w|y|z])$";
-			break;
-		case TI_82:
-			extensions = "\\.(rom|sav|82[b|c|d|g|i|l|m|n|p|q|s|t|u|v|w|y|z])$";
-			break;
-		case TI_83:
-			extensions = "\\.(rom|sav|83[b|c|d|g|i|l|m|n|p|q|s|t|u|v|w|y|z])$";
-			break;
-		case TI_83P:
-		case TI_83PSE:
-		case TI_84P:
-		case TI_84PSE:
-			extensions = "\\.(rom|sav|8x[b|c|d|g|i|k|l|m|n|p|q|s|t|u|v|w|y|z])$";
-			break;
-		case TI_84PCSE:
-			extensions = "\\.(rom|sav|8[x|c][b|c|d|g|i|k|l|m|n|p|q|s|t|u|v|w|y|z])$";
-			break;
-		case TI_85:
-			extensions = "\\.(rom|sav|85[b|c|d|g|i|l|m|n|p|q|s|t|u|v|w|y|z])$";
-			break;
-		case TI_86:
-			extensions = "\\.(rom|sav|86[b|c|d|g|i|l|m|n|p|q|s|t|u|v|w|y|z])$";
-			break;
-		default:
-			extensions = DEFAULT_FILE_REGEX;
-			break;
+		Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+		intent.setType("*/*");
+		intent.addCategory(Intent.CATEGORY_OPENABLE);
+		try {
+			startActivityForResult(Intent.createChooser(intent, getResources().getString(R.string.browseFileDescription)), LOAD_FILE_CODE);
+		} catch (android.content.ActivityNotFoundException ex) {
+			Toast.makeText(this, "Please install a file manager.", Toast.LENGTH_SHORT).show();
 		}
-		final String description = getResources().getString(R.string.browseFileDescription);
-		setupIntent.putExtra(IntentConstants.EXTENSION_EXTRA_REGEX, extensions);
-		setupIntent.putExtra(IntentConstants.BROWSE_DESCRIPTION_EXTRA_STRING, description);
-		startActivityForResult(setupIntent, LOAD_FILE_CODE);
 	}
 
 	private void launchWizard() {
@@ -516,5 +510,49 @@ public class WabbitemuActivityJava extends AppCompatActivity {
             dialog.dismiss();
             finish();
         }
+	}
+
+	private File copyFileFromUri(Uri uri) {
+		String fileName = getFileName(uri);
+		if (fileName == null) {
+			fileName = "temp_file.8xp";
+		}
+		File cacheDir = getCacheDir();
+		File file = new File(cacheDir, fileName);
+		try (InputStream inputStream = getContentResolver().openInputStream(uri);
+			 FileOutputStream outputStream = new FileOutputStream(file)) {
+			byte[] buffer = new byte[4 * 1024];
+			int read;
+			while ((read = inputStream.read(buffer)) != -1) {
+				outputStream.write(buffer, 0, read);
+			}
+			outputStream.flush();
+			return file;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	private String getFileName(Uri uri) {
+		String result = null;
+		if (uri.getScheme().equals("content")) {
+			try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+				if (cursor != null && cursor.moveToFirst()) {
+					int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+					if (index >= 0) {
+						result = cursor.getString(index);
+					}
+				}
+			}
+		}
+		if (result == null) {
+			result = uri.getPath();
+			int cut = result.lastIndexOf('/');
+			if (cut != -1) {
+				result = result.substring(cut + 1);
+			}
+		}
+		return result;
 	}
 }
