@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
                 if (prefs.getString(PreferenceConstants.ROM_PATH.toString(), "").isNullOrEmpty())
                     ChooseFileActivity::class.java
                 else
-                    WabbitemuActivityJava::class.java
+                    WabbitemuActivity::class.java
             )
         )
     }
