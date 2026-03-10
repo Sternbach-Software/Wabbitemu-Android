@@ -8,3 +8,5 @@
 .externalNativeBuild
 app/.cxx/
 /app/.cxx/
+
+/shared/build
