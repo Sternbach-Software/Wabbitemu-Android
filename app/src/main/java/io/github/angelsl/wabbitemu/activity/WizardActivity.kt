@@ -54,6 +54,15 @@ class WizardActivity : AppCompatActivity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.wizard)
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (!mWizardController!!.movePreviousPage()) {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
+            }
+        })
         val viewAnimator = ViewUtils.findViewById(this, R.id.viewFlipper, ViewAnimator::class.java)
         val navContainer = ViewUtils.findViewById(this, R.id.navContainer, ViewGroup::class.java)
         mWizardController = WizardController(
@@ -153,11 +162,6 @@ class WizardActivity : AppCompatActivity() {
         }
     }
 
-    override fun onBackPressed() {
-        if (!mWizardController!!.movePreviousPage()) {
-            super.onBackPressed()
-        }
-    }
 
     private fun tryDownloadAndCreateRom(
         calcModel: CalcModel,
