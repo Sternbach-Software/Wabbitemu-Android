@@ -1,0 +1,35 @@
+[versions]
+agp = "8.13.2"
+kotlin = "2.0.0"
+
+appcompat = "1.7.0"
+drawerlayout = "1.2.0"
+preferenceKtx = "1.2.1"
+jsr305 = "3.0.2"
+okhttp = "4.12.0"
+okhttpUrlconnection = "4.10.0"
+jsoup = "1.15.3"
+cabparser = "2.9"
+composeBom = "2024.05.00"
+activityCompose = "1.9.0"
+lifecycleViewmodelCompose = "2.6.1"
+
+[libraries]
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+androidx-drawerlayout = { module = "androidx.drawerlayout:drawerlayout", version.ref = "drawerlayout" }
+androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceKtx" }
+jsr305 = { module = "com.google.code.findbugs:jsr305", version.ref = "jsr305" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+okhttp-urlconnection = { module = "com.squareup.okhttp3:okhttp-urlconnection", version.ref = "okhttpUrlconnection" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+cabparser = { module = "com.dorkbox:CabParser", version.ref = "cabparser" }
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

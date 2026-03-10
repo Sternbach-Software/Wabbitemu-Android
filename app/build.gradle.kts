@@ -1,7 +1,7 @@
 plugins {
-    id("com.android.application")
-    id("kotlin-android")
-    id("org.jetbrains.kotlin.plugin.compose").version("2.0.0") // this version matches your Kotlin version
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -14,10 +14,10 @@ android {
         versionName = "1.0.7"
     }
     buildTypes {
-        getByName("debug") {
+        debug {
             applicationIdSuffix = ".debug"
         }
-        getByName("release") {
+        release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
         }
@@ -32,17 +32,13 @@ android {
             useLegacyPackaging = false
         }
         resources {
-            pickFirsts += listOf("LICENSE.Apachev2")
+            pickFirsts.add("LICENSE.Apachev2")
         }
     }
 
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.13"
     }
 
     compileOptions {
@@ -53,28 +49,27 @@ android {
 }
 
 dependencies {
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.drawerlayout)
+    implementation(libs.androidx.preference.ktx)
+//    implementation 'net.margaritov.preference.colorpicker.ColorPickerPreference:ColorPickerPreference:1.0.0'
+    implementation(libs.jsr305)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.urlconnection)
+    implementation(libs.jsoup)
+    implementation(libs.cabparser)
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.0")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("androidx.drawerlayout:drawerlayout:1.2.0")
-    implementation("androidx.preference:preference-ktx:1.2.1")
-//    implementation("net.margaritov.preference.colorpicker.ColorPickerPreference:ColorPickerPreference:1.0.0")
-    implementation("com.google.code.findbugs:jsr305:3.0.2")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.squareup.okhttp3:okhttp-urlconnection:4.10.0")
-    implementation("org.jsoup:jsoup:1.15.3")
-    implementation("com.dorkbox:CabParser:2.9")
-
-    val composeBom = platform("androidx.compose:compose-bom:2024.05.00")
+    val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
     androidTestImplementation(composeBom)
 
     // Choose one of the following:
     // Material Design 3
-    implementation("androidx.compose.material3:material3")
+    implementation(libs.androidx.compose.material3)
 
     // Optional - Integration with activities
-    implementation("androidx.activity:activity-compose:1.9.0")
+    implementation(libs.androidx.activity.compose)
     // Optional - Integration with ViewModels
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 }
