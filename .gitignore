@@ -8,3 +8,4 @@
 .externalNativeBuild
 app/.cxx/
 /app/.cxx/
+androidApp/.cxx
