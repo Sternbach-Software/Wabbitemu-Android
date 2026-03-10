@@ -253,9 +253,9 @@ class ChooseOsPageController(private val mView: ChooseOsPageView) :
                     val linkChildren = element.select("a")
                     for (linkChild in linkChildren) {
                         val href = linkChild.attr("href") ?: continue
-                        if (href.lowercase(Locale.getDefault()).endsWith("8xu") || href.lowercase(
-                                Locale.getDefault()
-                            ).endsWith("8cu")
+                        if (href.lowercase(Locale.getDefault()).endsWith("8xu") ||
+                            href.lowercase(Locale.getDefault()).endsWith("8cu") ||
+                            href.lowercase(Locale.getDefault()).endsWith("73u")
                         ) {
                             val isProtected = element.classNames().contains("protected-download")
                             val nextAction =
@@ -273,6 +273,8 @@ class ChooseOsPageController(private val mView: ChooseOsPageView) :
             private get() = when (mCalcModel) {
                 CalcModel.TI_73 -> "https://education.ti.com/en/us/software/details/en/956CE30854A74767893104FCDF195B76/73ti73exploreroperatingsystem"
                 CalcModel.TI_84P, CalcModel.TI_84PSE -> "https://education.ti.com/en/us/software/details/en/B7DADA7FD4AA40CE9D7911B004B8C460/ti84plusoperatingsystem"
+                CalcModel.TI_83P, CalcModel.TI_83PSE -> "https://web.archive.org/web/20150915040752/https://education.ti.com/en/us/software/details/en/C95956E744FB4C0A899F5A63EBEA60DD/83ti83plusoperatingsystemsoftware"
+                CalcModel.TI_84PCSE -> "https://education.ti.com/en/asia/software/details/en/812E5FCF48C6456CB156A03DE5D07016/singaporeapprovedosapps"
                 else -> null
             }
 

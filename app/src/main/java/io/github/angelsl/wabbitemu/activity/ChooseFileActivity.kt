@@ -130,7 +130,14 @@ class ChooseFileActivity : ComponentActivity() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "A ROM file is needed to make this app work. Previous versions included a wizard/scraper bot for downloading a ROM, but Texas Instruments updated their website, and the scraper bot stopped working. The project is open-source, please feel free to contribute.")
+                    Text(text = "A ROM file is needed to make this app work. You can use the setup wizard to automatically download a ROM, or manually choose a local ROM file.")
+                    Button(
+                        onClick = {
+                            startActivity(Intent(this@ChooseFileActivity, WizardActivity::class.java))
+                        }
+                    ) {
+                        Text("Launch Setup Wizard")
+                    }
                     SimpleRadioGroup(
                         CalcModel.entries.minus(CalcModel.NO_CALC),
                         selectedModel,
@@ -143,7 +150,7 @@ class ChooseFileActivity : ComponentActivity() {
                         },
                         enabled = selectedModel != CalcModel.NO_CALC
                     ) {
-                        Text("Choose ROM file")
+                        Text("Choose Local ROM file")
                     }
                 }
             }
