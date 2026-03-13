@@ -25,6 +25,7 @@ public class MainThread implements SurfaceHolder.Callback, Runnable {
     public MainThread() {
         mPaint = new Paint();
         mPaint.setAntiAlias(false);
+        mPaint.setFilterBitmap(false);
         mPaint.setARGB(0xFF, 0xFF, 0xFF, 0xFF);
     }
 
